@@ -65,4 +65,39 @@ public class Node {
     public int getSize(){
         return this.size;
     }
+    
+    /**
+     * Gets the height of the node.
+     * @param node
+     * @return
+     */
+    private int getHeight(Node node){
+        if (node == null){
+            return -1;
+        } else {
+            return node.getSize();
+        }
+    }
+    
+    /**
+     * Delete this current node and remove it from the tree
+     */
+    public void delete(){
+        this.parent = null;
+        this.leftChild = null;
+        this.rightChild = null;
+    }
+    
+    
+    /**
+     * Updates the height of a node.
+     * @param node
+     */
+    public void updateHeight(){
+        int maxHeight = getHeight(getLeftChild());
+        if (getHeight(getRightChild()) > maxHeight){
+            maxHeight = getHeight(getRightChild());
+        }
+        setSize(maxHeight+1);
+    }
 }

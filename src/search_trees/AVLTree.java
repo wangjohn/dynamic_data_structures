@@ -148,6 +148,117 @@ public class AVLTree implements Tree {
     public Node find(double key) {
         return find(key, false);
     }
+    
+    /**
+     * Method for rebalancing the tree.
+     * @param node
+     */
+    private void rebalanceTree(Node node){
+        while (node != null){
+            node.updateHeight();
+            // If the right subtree is greater than the left subtree, perform a left rotation
+            if (getHeight(node.getRightChild()) > getHeight(node.getLeftChild()) + 1){
+                if (getHeight(node.getRightChild().getRightChild()) >= getHeight(node.getRightChild().getLeftChild())){
+                    leftRotate(node);
+                } else {
+                    // double rotation
+                    rightRotate(node.getRightChild());
+                    leftRotate(node);
+                }
+            // Otherwise we go to this case
+            } else {
+                if (getHeight(node.getLeftChild().getLeftChild()) >= getHeight(node.getLeftChild().getRightChild())){
+                    rightRotate(node);
+                } else {
+                    leftRotate(node.getLeftChild());
+                    rightRotate(node);
+                }
+            }
+            node = node.getParent();
+        }
+    }
+    
+    /**
+     * private method for getting the height of a node. 
+     * @param node
+     * @return
+     */
+    private int getHeight(Node node){
+        if (node == null){
+            return -1;
+        } else {
+            return node.getSize();
+        }
+    }
+    
+    /**
+     * Method for making a right AVL rotation
+     * @param node
+     */
+    private void rightRotate(Node node){
+        Node y = node.getLeftChild();
+        Node b = y.getRightChild();
+        
+        // We make y the new root of the subtree
+        if (node.getParent() == null){
+            setRoot(y);
+        } else {
+            // Set y as the right or left child according to what node is set as
+            if (node.equals(node.getParent().getLeftChild())){
+                node.getParent().setLeftChild(y);
+            } else {
+                node.getParent().setRightChild(y);
+            }
+        }
+        
+        // Make node into y's new right child
+        y.setRightChild(node);
+        node.setParent(y);
+        
+        // Make b into node's new left child
+        node.setLeftChild(b);
+        if (b != null){
+            b.setParent(node);
+        }
+        
+        node.updateHeight();
+        b.updateHeight();
+    }
+    
+    /**
+     * Method for making a left AVL rotation
+     * @param node
+     */
+    private void leftRotate(Node node){
+        Node y = node.getRightChild();
+        Node b = y.getLeftChild();
+        
+        // We make y the new root of the subtree
+        if (node.getParent() == null){
+            setRoot(y);
+        } else {
+            // Set y as the right or left child according to what node is set as
+            if (node.equals(node.getParent().getLeftChild())){
+                node.getParent().setLeftChild(y);
+            } else {
+                node.getParent().setRightChild(y);
+            }
+        }
+        
+        // Make node into y's new left child
+        y.setLeftChild(node);
+        node.setParent(y);
+        
+        // Make b into node's new right child
+        node.setRightChild(b);
+        if (b != null){
+            b.setParent(node);
+        }
+        
+        node.updateHeight();
+        y.updateHeight();
+    }
+   
 
     /**
      * Adds newNode into the AVL Tree. If newNode has a key which is equal to a key already in the tree, that node will not be updated,
@@ -171,56 +282,62 @@ public class AVLTree implements Tree {
             closestNode.setRightChild(newNode);
         }
         newNode.setParent(closestNode);
-        
+        newNode.updateHeight();
+        rebalanceTree(newNode);
     }
-
+    
     /**
-     * Not yet implemented correctly
+     * Deletes the key from the tree
+     * @param key the key of the node to delete
+     * @return the node that was deleted from the tree
      */
     public Node deleteKey(double key) {
         Node toBeDeletedNode = find(key);
-        // Only need to perform operations if we have a node keyed on the key given.
-        if (toBeDeletedNode != null){
-            Node leftChild = toBeDeletedNode.getLeftChild();
-            Node rightChild = toBeDeletedNode.getRightChild();
-            Node parent = toBeDeletedNode.getParent();
-                        
-            // Get a node to replace the old one
-            Node replacementNode;
-            if (leftChild == null){
-                replacementNode = rightChild;
-            } else if (rightChild == null){
-                replacementNode = leftChild;
-            } else {
-                replacementNode = successor(toBeDeletedNode);
-                if (replacementNode == null){
-                    replacementNode = predecessor(toBeDeletedNode);
-                }
-            }
-            
-            
-            
-            // Figure out whether the deleted node is a left or right child
-            if (parent != null){
-                if (toBeDeletedNode.equals(parent.getLeftChild())){
-                    parent.setLeftChild(replacementNode);
-                } else {
-                    parent.setRightChild(replacementNode);
-                }
-            }
-            
-
-            
-
-        }
-        
-        // TODO Auto-generated method stub
-        return null;
+        return deleteNode(toBeDeletedNode);
     }
 
-    public Node deleteNode(Node node) {
-        // TODO Auto-generated method stub
-        return null;
+    /**
+     * Delete a node from the tree
+     * @param toBeDeletedNode the node that will be deleted
+     * @return the deleted node
+     */
+    public Node deleteNode(Node toBeDeletedNode) {
+        // Only need to perform operations if we have a node keyed on the key given.
+        if (toBeDeletedNode == null){
+            return null;
+        } 
+        Node theParent = toBeDeletedNode.getParent();
+        Node newChild;
+        
+        if (toBeDeletedNode.getLeftChild() == null || toBeDeletedNode.getRightChild() == null){
+            // Find out what the new child will be
+            if (toBeDeletedNode.getLeftChild() == null){
+                newChild = toBeDeletedNode.getRightChild();
+            } else {
+                newChild = toBeDeletedNode.getLeftChild();
+            }         
+        } else {
+            // Get the successor if the node to be deleted has two subchildren.
+            newChild = successor(toBeDeletedNode);
+            toBeDeletedNode.delete();
+            newChild.delete();
+        }    
+        
+        // Set the parent's left child and newChild's parent
+        if (toBeDeletedNode.equals(theParent.getLeftChild())){
+            // If the to be deleted node is the left child
+            theParent.setLeftChild(newChild);
+        } else {
+            // If the to be deleted node is the right child of the parent
+            theParent.setRightChild(newChild);
+        }            
+        
+        // If the child is not null, set it's parent
+        if (newChild != null){
+            newChild.setParent(theParent);
+        }
+
+        return toBeDeletedNode;
     }
 
 }
