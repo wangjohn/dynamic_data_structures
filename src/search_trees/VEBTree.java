@@ -8,12 +8,12 @@ package search_trees;
  * @author John
  *
  */
-public class VEBTree implements Tree{
+public class VEBTree {
 
     private int maxInt;
     private int bucketSize;
-    private Node min;
-    private Node max;
+    private int min;
+    private int max;
     private VEBTree summary;
     private VEBTree [] blocks;
     
@@ -135,7 +135,9 @@ public class VEBTree implements Tree{
         int lower = getLowerHalf((intKey);
         
         if (key == this.max.getKey()){
-            
+            // Need to find a new maximum
+            Node maxTop = this.summary.findMax();
+            this.blocks[maxTop.getKey()].findMax();
         } 
         if (key == this.min.getKey()){
             
